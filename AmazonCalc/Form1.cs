@@ -217,7 +217,7 @@ namespace AmazonCalc
             var amazonCommission = grandtotalInTry * amazonRate;
 
             var etsyRate = Convert.ToDecimal(txtEtsyRate.Text) / 100;
-            var etsyCommission = (grandtotalInTry * etsyRate) + (unit * etsyListingFee);
+            var etsyCommission = (grandtotalInTry * etsyRate) + (unit * etsyListingFee * (decimal)GetExchangeRateForCurrency("USD"));
 
             labelGrandTotal.Text = grandtotalInTry.ToString("C2");
             labelShipping.Text = shippingInTry.ToString("C2");
