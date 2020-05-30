@@ -95,7 +95,8 @@ namespace AmazonCalc
 
                     var currencyNode = nodeList[i].Attributes;
                     if (currencyNode != null)
-                        tcmb.Add(new Tcmb
+                    {
+                        var currentRate = new Tcmb
                         {
                             CurrencyCode = currencyNode["CurrencyCode"].Value,
                             Unit = nodes[0].FirstChild == null ? 0 : Convert.ToInt32(nodes[0].FirstChild.Value),
@@ -119,7 +120,18 @@ namespace AmazonCalc
                             CrossRateOther = nodes[8].FirstChild == null
                                 ? 0
                                 : Convert.ToDecimal(nodes[8].FirstChild?.Value.Replace(".", ","))
-                        });
+                        };
+
+                        if (currentRate.Unit != 0)
+                        {
+                            currentRate.BanknoteSelling /= currentRate.Unit;
+                            currentRate.BanknoteBuying /= currentRate.Unit;
+                            currentRate.ForexSelling /= currentRate.Unit;
+                            currentRate.ForexBuying /= currentRate.Unit;
+                        }
+
+                        tcmb.Add(currentRate);
+                    }
                 }
             }
 
@@ -194,7 +206,7 @@ namespace AmazonCalc
             var grandtotal = Convert.ToDecimal(txtGrandTotal.Text.Replace(".", ","));
             var shipping = Convert.ToDecimal(txtShipping.Text.Replace(".", ","));
             var productCost = Convert.ToDecimal(txtProductCost.Text.Replace(".", ","));
-            var unit = Convert.ToInt32(txtProductCost.Text);
+            var unit = Convert.ToInt32(txtUnit.Text);
             var etsyListingFee = Helper.RoundedValue(Convert.ToDecimal(AppSettings["EtsyListingFee"].Replace(".", ",")));
 
             var grandtotalInTry = ConvertToTry(grandtotal, cbGrandTotalCurrency);
@@ -224,13 +236,18 @@ namespace AmazonCalc
             {
                 return amount;
             }
-            
-            var selectedExchangeRate =
-                (decimal) ExchangeRates.FirstOrDefault(x => x.CurrencyCode == selectedCurrency)?.ForexSelling;
 
+            var selectedExchangeRate = (decimal) GetExchangeRateForCurrency(selectedCurrency);
 
             return Helper.RoundedValue(amount * selectedExchangeRate);
         }
+
+        private decimal? GetExchangeRateForCurrency(string currency)
+        {
+            return ExchangeRates.FirstOrDefault(x => x.CurrencyCode == currency)?.ForexSelling;
+        }
+
+        #region ValueChangings
 
         private void txtGrandTotal_TextChanged(object sender, EventArgs e)
         {
@@ -261,5 +278,22 @@ namespace AmazonCalc
         {
             Calculate();
         }
+
+        private void cbGrandTotalCurrency_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Calculate();
+        }
+
+        private void cbShippingCurrency_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Calculate();
+        }
+
+        private void cbProductCostCurrency_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Calculate();
+        }
+
+        #endregion
     }
 }
